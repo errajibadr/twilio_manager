@@ -1,5 +1,6 @@
 import logging
 import urllib.parse
+from contextlib import asynccontextmanager
 from typing import Dict, Optional, Tuple
 
 import aiohttp
@@ -23,19 +24,21 @@ class AsyncTwilioHttpClient(HttpClient):
         self.proxy = proxy if proxy else None
         self._session = None
 
+    @property
+    def session(self):
+        if self._session is None or self._session.closed:
+            raise RuntimeError("Session not initialized or closed")
+        return self._session
+
     async def __aenter__(self):
-        self._session = aiohttp.ClientSession()
+        if self._session is None or self._session.closed:
+            self._session = aiohttp.ClientSession()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        if self._session:
+        if self._session and not self._session.closed:
             await self._session.close()
-            
-    @property
-    def session(self):
-        if self._session is None:
-            raise ValueError("Session not initialized")
-        return self._session
+            self._session = None
 
     async def init_session(self):
         """Initialize aiohttp session"""
