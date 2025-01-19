@@ -1,9 +1,7 @@
 import asyncio
-import http
 import logging
 from typing import Any, Dict, List, Optional
 
-import httpx
 from twilio.rest import Client
 
 from async_twilio_http_client import AsyncTwilioHttpClient
