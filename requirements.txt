@@ -1,5 +1,6 @@
-streamlit
+streamlit>=1.32.0
 httpx
 python-dotenv
 twilio
-aiohttp>=3.8.0 
+aiohttp>=3.8.0
+pandas>=2.0.0 
