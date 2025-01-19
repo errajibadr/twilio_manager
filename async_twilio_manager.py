@@ -1,14 +1,14 @@
 import asyncio
 import http
 import logging
-from typing import Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
 import httpx
 from twilio.rest import Client
 
 from async_twilio_http_client import AsyncTwilioHttpClient
 
-_logger = logging.getLogger("twilio.async_manager")
+_logger = logging.getLogger(__name__)
 
 class AsyncTwilioManager:
     def __init__(
@@ -22,27 +22,26 @@ class AsyncTwilioManager:
         self.auth_token = auth_token
         self.timeout = timeout
         self.logger = logger
-        self.http_client = AsyncTwilioHttpClient(timeout=timeout, logger=logger)
-        self._client: Optional[Client] = None
+        self._http_client = AsyncTwilioHttpClient()
+        self._client = None
 
     @property
     def client(self) -> Client:
         """Get the Twilio client, raising an error if it's not initialized."""
-        if self._client is None:
-            raise RuntimeError("AsyncTwilioManager must be used within an async context manager")
+        if not self._client:
+            self._client = Client(
+                self.account_sid,
+                self.auth_token,
+                http_client=self._http_client
+            )
         return self._client
 
     async def __aenter__(self):
-        await self.http_client.__aenter__()
-        self._client = Client(
-            self.account_sid,
-            self.auth_token,
-            http_client=self.http_client
-        )
+        await self._http_client.init_session()
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
-        await self.http_client.__aexit__(exc_type, exc_val, exc_tb)
+        await self._http_client.close_session()
 
     async def list_subaccounts(self, friendly_name: Optional[str] = None) -> List[Dict]:
         """
@@ -99,7 +98,7 @@ class AsyncTwilioManager:
             self.logger.error(f"Failed to fetch phone numbers: {str(e)}")
             raise
         
-    async def get_addresses(self, account_sid: Optional[str] = None) -> List[Dict]:
+    async def get_addresses(self, account_sid: Optional[str] = None) -> List[Dict[str, Any]]:
         """
         Get all addresses associated with a subaccount.
         
@@ -116,7 +115,7 @@ class AsyncTwilioManager:
             self.logger.error(f"Failed to fetch addresses: {str(e)}")
             raise
         
-    async def create_address(self, account_sid: str, customer_name: str = 'PrestigeWebb', friendly_name: str = 'PrestigeWebb', street: str = '22 rue du pont aux choux', city: str = 'Paris', region: str = 'Paris', postal_code: str = '75003', iso_country: str = 'FR') -> dict:
+    async def create_address(self, account_sid: str, customer_name: str = 'PrestigeWebb', friendly_name: str = 'PrestigeWebb', street: str = '22 rue du pont aux choux', city: str = 'Paris', region: str = 'Paris', postal_code: str = '75003', iso_country: str = 'FR') -> dict[str, str]:
         """
         Create an address for a subaccount.
         """
@@ -179,70 +178,100 @@ class AsyncTwilioManager:
     async def transfer_phone_number(self, source_account_sid: str, phone_number_sid: str, target_account_sid: str, address_sid: Optional[str] = None, bundle_sid: Optional[str] = None) -> Dict:
         """
         Transfer a phone number to a different subaccount.
+
+        Args:
+            source_account_sid: The source subaccount SID
+            phone_number_sid: The SID of the phone number to transfer
+            target_account_sid: The target subaccount SID
+            address_sid: The address SID
+            bundle_sid: The bundle SID
+
+        Returns:
+            Dict containing the updated phone number information
         """
         try:
-            if bundle_sid is None:
-                number_type = await self.get_number_type_from_sid(phone_number_sid, source_account_sid)
-                reg_bundle = await self.list_regulatory_bundles(account_sid=target_account_sid, number_type=number_type)
-                if len(reg_bundle) == 0:
-                    self.logger.info('No bundle found, duplicating own bundles from main account')
-                    await self.duplicate_own_bundles_to_subaccount(target_account_sid)
-                    reg_bundle = await self.list_regulatory_bundles(account_sid=target_account_sid, number_type=number_type)
-                    if len(reg_bundle) == 0:
-                        raise Exception('No bundle found, creating one')
-                bundle_sid = reg_bundle[0]['sid']
+            # Get or create bundle if not provided
+            bundle_sid = await self._get_or_create_bundle(bundle_sid, phone_number_sid, source_account_sid, target_account_sid)
+            
+            # Get or create address if not provided
+            address_sid = await self._get_or_create_address(address_sid, target_account_sid)
 
-            if address_sid is None:
-                addresses = await self.get_addresses(target_account_sid)
-                if len(addresses) == 0:
-                    self.logger.info('No address found, creating one')
-                    address = await self.create_address(account_sid=target_account_sid)
-                    address_sid = address['sid']
-                    address_friendly_name = address['friendly_name']
-                else:
-                    self.logger.info('Address found, using it')
-                    address_sid = addresses[0]['sid']
-                    address_friendly_name = addresses[0]['friendly_name']
-                    
-                self.logger.info(f'Using address_sid {address_sid}, friendly_name {address_friendly_name}')
-
-            try:
-                # Attempt to update the phone number
-                updated_number = await self.client.api.v2010.accounts(source_account_sid).incoming_phone_numbers(phone_number_sid).update_async(
-                    account_sid=target_account_sid,
-                    address_sid=address_sid,
-                    bundle_sid=bundle_sid
-                )
-                self.logger.info(
-                    f"Successfully transferred number {phone_number_sid} from account {source_account_sid} to account {target_account_sid}"
-                )
-                return updated_number.__dict__
-
-            except Exception as transfer_error:
-                # If we get an error, verify if the transfer actually succeeded
-                try:
-                    # Wait a short moment for the transfer to complete
-                    await asyncio.sleep(2)
-                    
-                    # Check if the number exists in the target account
-                    target_numbers = await self.get_account_numbers(target_account_sid)
-                    for number in target_numbers:
-                        if number.get('sid') == phone_number_sid:
-                            self.logger.info(
-                                f"Number {phone_number_sid} found in target account despite error. Transfer likely successful."
-                            )
-                            return number
-
-                    # If we didn't find the number in the target account, raise the original error
-                    raise transfer_error
-
-                except Exception as verify_error:
-                    self.logger.error(f"Error during transfer verification: {str(verify_error)}")
-                    raise transfer_error
+            return await self._execute_number_transfer(source_account_sid, phone_number_sid, target_account_sid, address_sid, bundle_sid)
 
         except Exception as e:
             self.logger.error(f"Failed to transfer phone number: {str(e)}")
             raise
+
+    async def _get_or_create_bundle(self, bundle_sid: Optional[str], phone_number_sid: str, source_account_sid: str, target_account_sid: str) -> str:
+        """Helper method to get or create a regulatory bundle"""
+        if bundle_sid is not None:
+            return bundle_sid
+            
+        number_type = await self.get_number_type_from_sid(phone_number_sid, source_account_sid)
+        reg_bundle = await self.list_regulatory_bundles(account_sid=target_account_sid, number_type=number_type)
+        
+        if not reg_bundle:
+            self.logger.info('No bundle found, duplicating own bundles from main account')
+            await self.duplicate_own_bundles_to_subaccount(target_account_sid)
+            reg_bundle = await self.list_regulatory_bundles(account_sid=target_account_sid, number_type=number_type)
+            if not reg_bundle:
+                raise Exception('No bundle found, creating one')
+                
+        return reg_bundle[0]['sid']
+
+    async def _get_or_create_address(self, address_sid: Optional[str], target_account_sid: str) -> str:
+        """Helper method to get or create an address"""
+        if address_sid is not None:
+            return address_sid
+            
+        addresses : list[dict[str,str]] = await self.get_addresses(target_account_sid)
+        if len(addresses) == 0:
+            self.logger.info('No address found, creating one')
+            address = await self.create_address(account_sid=target_account_sid)
+            address_sid = address['sid']
+            address_friendly_name = address['friendly_name']
+        else:
+            self.logger.info('Address found, using it')
+            address_sid = addresses[0]['sid']
+            address_friendly_name = addresses[0]['friendly_name']
+            
+        self.logger.info(f'Using address_sid {address_sid}, friendly_name {address_friendly_name}')
+        return address_sid
+
+    async def _execute_number_transfer(self, source_account_sid: str, phone_number_sid: str, target_account_sid: str, address_sid: str, bundle_sid: str) -> Dict:
+        """Helper method to execute the actual number transfer"""
+        try:
+            updated_number = await self.client.api.v2010.accounts(source_account_sid).incoming_phone_numbers(phone_number_sid).update_async(
+                account_sid=target_account_sid,
+                address_sid=address_sid,
+                bundle_sid=bundle_sid
+            )
+            self.logger.info(
+                f"Successfully transferred number {phone_number_sid} from account {source_account_sid} to account {target_account_sid}"
+            )
+            return updated_number.__dict__
+
+        except Exception as transfer_error:
+            return await self._verify_transfer(transfer_error, phone_number_sid, target_account_sid)
+
+    async def _verify_transfer(self, transfer_error: Exception, phone_number_sid: str, target_account_sid: str) -> Dict:
+        """Helper method to verify transfer status in case of errors"""
+        try:
+            await asyncio.sleep(2)
+            target_numbers = await self.get_account_numbers(target_account_sid)
+            
+            for number in target_numbers:
+                if number.get('sid') == phone_number_sid:
+                    self.logger.info(
+                        f"Number {phone_number_sid} found in target account despite error. Transfer likely successful."
+                    )
+                    return number
+
+            raise transfer_error
+
+        except Exception as verify_error:
+            self.logger.error(f"Error during transfer verification: {str(verify_error)}")
+            raise transfer_error
 
     async def list_regulatory_bundles(self, account_sid: Optional[str] = None, number_type: Optional[str] = None, iso_country: Optional[str] = 'FR') -> List[Dict]:
         """
