@@ -167,7 +167,11 @@ def main():
             selected_num_sid = st.selectbox(
                 "Select a phone number to transfer",
                 [p["sid"] for p in phone_numbers],
-                format_func=lambda sid: f"{sid} ({next((p.get('friendly_name') for p in phone_numbers if p['sid'] == sid), '')})"
+                format_func=lambda sid: (
+                    # Look up the phone number object by SID
+                    f"{('📱' if next((p for p in phone_numbers if p['sid'] == sid), {}).get('number_type') == 'mobile' else '☎️')} "
+                    f"{next((p for p in phone_numbers if p['sid'] == sid), {}).get('friendly_name', 'No Friendly Name')}"
+                )
             )
 
             # Next, pick a target subaccount
