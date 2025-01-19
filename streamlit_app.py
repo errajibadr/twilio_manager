@@ -59,47 +59,118 @@ def refresh_subaccounts():
     """
     get_subaccounts.clear()
 
-def main():
-    st.title("Async Twilio Manager UI")
+def get_subaccount_bundles(subaccount_sid):
+    """
+    Fetch regulatory bundles for a specific subaccount.
+    """
+    async def fetch_bundles():
+        async with AsyncTwilioManager(MAIN_ACCOUNT_SID, MAIN_AUTH_TOKEN) as manager:
+            return await manager.list_regulatory_bundles(account_sid=subaccount_sid)
+    return asyncio.run(fetch_bundles())
 
-    # Refresh button to clear and re-fetch subaccounts
-    if st.button("Refresh Subaccounts"):
+def main():
+    st.set_page_config(page_title="Async Twilio Manager", layout="wide")
+
+    st.sidebar.title("Async Twilio Manager UI")
+    # Moved the refresh subaccounts button to the sidebar
+    if st.sidebar.button("Refresh Subaccounts"):
         refresh_subaccounts()
+        st.rerun()
 
     subaccounts = get_subaccounts()
     
     if not subaccounts:
-        st.warning("No subaccounts found.")
+        st.sidebar.warning("No subaccounts found.")
         return
 
-    # Choose a subaccount to view phone numbers
+    # Sidebar selectbox for subaccount
     subaccount_sids = [sa["sid"] for sa in subaccounts]
     subaccount_map = {sa["sid"]: sa["friendly_name"] for sa in subaccounts}
-    selected_sub_sid = st.selectbox("Select a subaccount", subaccount_sids, format_func=lambda x: subaccount_map[x])
+    selected_sub_sid = st.sidebar.selectbox(
+        "Select a subaccount",
+        subaccount_sids,
+        format_func=lambda x: subaccount_map[x]
+    )
 
-    if selected_sub_sid:
-        with st.spinner("Loading phone numbers..."):
-            phone_numbers = get_subaccount_numbers(selected_sub_sid)
+    # Layout columns: left for tabs with phone numbers & bundles, right for transfer UI
+    col_left, col_right = st.columns([2, 1], gap="large")
 
-        col1, col2 = st.columns([1, 1])
-        with col1:
-            st.write(f"Found {len(phone_numbers)} phone numbers in subaccount {subaccount_map[selected_sub_sid]}:")
-        with col2:
-            # Refresh button for phone numbers
+    with col_left:
+        st.markdown(
+            """
+            <div style="background-color:#e8f4fa; padding:0.5rem; border-radius: 5px;">
+            <h3 style="color:#1c4e80;">Subaccount Details</h3>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        st.write(f"Subaccount SID: {selected_sub_sid}")
+
+        # Show tabs for phone numbers and regulatory bundles
+        tab_numbers, tab_bundles = st.tabs(["Phone Numbers", "Regulatory Bundles"])
+
+        with tab_numbers:
+            # We fetch phone numbers for the selected subaccount
+            with st.spinner("Loading phone numbers..."):
+                phone_numbers = get_subaccount_numbers(selected_sub_sid)
+
+            # Refresh phone numbers button
             if st.button("Refresh phone numbers"):
                 phone_numbers = get_subaccount_numbers(selected_sub_sid)
                 st.rerun()
 
+            st.write(f"Found {len(phone_numbers)} phone numbers in subaccount {subaccount_map[selected_sub_sid]}:")
+
+            if phone_numbers:
+                # Display each phone number with an emoji based on type
+                for p in phone_numbers:
+                    # If the stored number_type is 'mobile', use a mobile phone emoji; otherwise '☎️'
+                    emoji = "📱" if p.get("number_type") == "mobile" else "☎️"
+                    friendly = p.get("friendly_name") or "No Friendly Name"
+                    st.markdown(f"- {emoji} **{p['sid']}** ({friendly})")
+            else:
+                st.warning("This subaccount has no phone numbers.")
+
+        with tab_bundles:
+            # We fetch regulatory bundles for the selected subaccount
+            with st.spinner("Loading regulatory bundles..."):
+                bundles = get_subaccount_bundles(selected_sub_sid)
+
+            if st.button("Refresh bundles"):
+                bundles = get_subaccount_bundles(selected_sub_sid)
+                st.rerun()
+
+            st.write(f"Found {len(bundles)} bundles in subaccount {subaccount_map[selected_sub_sid]}:")
+
+            if bundles:
+                for b in bundles:
+                    # Use a phone emoji for 'national' or 'mobile' type
+                    number_type = b.get("number_type", "")
+                    emoji = "📱" if number_type == "mobile" else "☎️"
+                    friendly = b.get("friendly_name") or b.get("sid")
+                    st.markdown(f"- {emoji} **{b['sid']}** ({friendly}), Type: {number_type}")
+            else:
+                st.warning("This subaccount has no regulatory bundles.")
+
+    with col_right:
+        st.markdown(
+            """
+            <div style="background-color:#f8f2fa; padding:0.5rem; border-radius: 5px;">
+            <h3 style="color:#7b1ca0;">Transfer Phone Number</h3>
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+        # Provide a selectbox for phone numbers to transfer
+        phone_numbers = get_subaccount_numbers(selected_sub_sid)
         if phone_numbers:
-            # Combine SID with friendly_name in parentheses
             selected_num_sid = st.selectbox(
-                "Select a phone number SID to transfer",
+                "Select a phone number to transfer",
                 [p["sid"] for p in phone_numbers],
                 format_func=lambda sid: f"{sid} ({next((p.get('friendly_name') for p in phone_numbers if p['sid'] == sid), '')})"
             )
 
-            # If we pick a phone number, allow transferring to another subaccount
-            st.write("Transfer to another subaccount:")
+            # Next, pick a target subaccount
             other_subaccounts = [sa for sa in subaccounts if sa["sid"] != selected_sub_sid]
             if not other_subaccounts:
                 st.info("No other subaccounts available for transfer.")
@@ -110,7 +181,7 @@ def main():
                     format_func=lambda sid: next((sa["friendly_name"] for sa in other_subaccounts if sa["sid"] == sid), sid)
                 )
 
-                if st.button("Transfer Number"):
+                if st.button("Transfer Number", key="transfer_btn"):
                     with st.spinner("Transferring phone number..."):
                         result = do_transfer_phone_number(
                             source_sid=selected_sub_sid,
@@ -120,7 +191,7 @@ def main():
                         st.success(f"Phone number {selected_num_sid} transferred successfully!")
                         st.json(result)
         else:
-            st.warning("This subaccount has no phone numbers.")
+            st.warning("No phone numbers available; cannot transfer.")
 
 if __name__ == "__main__":
     main()
