@@ -42,11 +42,8 @@ class StreamlitAuth:
             return False
 
         stored_password = self.config["credentials"][username]["password"]
-        logger.info(f"Stored password: {stored_password}")
-        logger.info(f"Password: {password}")
-        logger.info(f"Hasher: {stauth.Hasher([]).hash(password)}")
 
-        is_valid = stauth.Hasher([]).hash(password) == stored_password
+        is_valid = stauth.Hasher([]).check_pw(password, stored_password)
 
         if is_valid:
             logger.info(f"Login successful for user: {username}")

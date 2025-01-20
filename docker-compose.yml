@@ -1,0 +1,11 @@
+version: '3.8'
+
+services:
+  streamlit:
+    build: .
+    ports:
+      - "8484:8484"
+    volumes:
+      - .:/app
+    environment:
+      - PYTHONUNBUFFERED=1 
