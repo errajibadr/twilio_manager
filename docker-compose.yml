@@ -15,7 +15,12 @@ services:
       - STREAMLIT_SERVER_PORT=8484
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.streamlit.rule=PathPrefix(`/twilio-manager/`)"
+      - "traefik.http.routers.streamlit.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio-manager/`)"
       - "traefik.http.services.streamlit.loadbalancer.server.port=8484"
       - "traefik.http.middlewares.streamlit-strip.stripprefix.prefixes=/twilio-manager"
-      - "traefik.http.routers.streamlit.middlewares=streamlit-strip"
+      - "traefik.http.middlewares.streamlit-strip.stripprefix.forceSlash=true"
+      - "traefik.http.middlewares.streamlit-redirect.redirectregex.regex=^https://solutions.dataunboxed.io/$$"
+      - "traefik.http.middlewares.streamlit-redirect.redirectregex.replacement=https://solutions.dataunboxed.io/twilio-manager/"
+      - "traefik.http.routers.streamlit.middlewares=streamlit-redirect,streamlit-strip@docker"
+      - "log.level=DEBUG"
+      - "traefik.http.middlewares.streamlit-strip.stripprefix.debug=true"
