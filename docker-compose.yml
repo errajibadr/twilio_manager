@@ -9,6 +9,5 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1 
-      - STREAMLIT_BASE_URL=/twilio-manager/
-      - STREAMLIT_SERVER_BASE_URL_PATH=/twilio-manager/
       - STREAMLIT_SERVER_ENABLE_CORS=true
+      - STREAMLIT_SERVER_BASE_URL_PATH=twilio-manager
