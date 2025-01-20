@@ -1,0 +1,11 @@
+{
+  "name": "twilio-manager",
+  "type": "docker",
+  "dockerfile": "./Dockerfile",
+  "port": 8501,
+  "healthCheckPath": "/_stcore/health",
+  "deploymentStrategy": "rolling",
+  "environmentVariables": {
+    "PYTHONUNBUFFERED": "1"
+  }
+} 

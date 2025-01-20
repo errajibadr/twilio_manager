@@ -1,14 +1,29 @@
-version: '3.8'
-
 services:
   streamlit:
     build: .
     ports:
-      - "8484:8484"
+      - '8484:8484'
     volumes:
-      - .:/app
-    environment:
-      - PYTHONUNBUFFERED=1 
-      - STREAMLIT_SERVER_ENABLE_CORS=true
-      - STREAMLIT_SERVER_ADDRESS=0.0.0.0
-      - STREAMLIT_SERVER_PORT=8484
+      - 'zkcos4k404ko488g0sk0cokg_:/app'
+    container_name: streamlit-zkcos4k404ko488g0sk0cokg-181615426022
+    restart: unless-stopped
+    labels:
+      - coolify.managed=true
+      - coolify.version=4.0.0-beta.360
+      - coolify.serviceId=3
+      - coolify.type=service          
+      - coolify.service.subId=4
+      - coolify.service.subType=application
+      - traefik.enable=true
+      - traefik.http.middlewares.gzip.compress=true
+      - traefik.http.middlewares.https-0-zkcos4k404ko488g0sk0cokg-streamlit-stripprefix.stripprefix.prefixes=/twilio/
+      - traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.entryPoints=http
+      - 'traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio/`)'
+      - traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.service=http-0-zkcos4k404ko488g0sk0cokg-streamlit
+      - traefik.http.services.http-0-zkcos4k404ko488g0sk0cokg-streamlit.loadbalancer.server.port=8484
+    networks:
+      zkcos4k404ko488g0sk0cokg: null
+
+networks:
+  zkcos4k404ko488g0sk0cokg:
+    external: true
