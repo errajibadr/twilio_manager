@@ -13,3 +13,12 @@ wheels/
 .streamlit/secrets.toml
 
 logs/*
+
+# Docker
+.docker/
+*.env
+.env.*
+
+# Coolify specific
+coolify/
+.coolify/
