@@ -13,7 +13,7 @@ RUN uv pip install --system .
 ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose the port Streamlit runs on
-# EXPOSE 8484
+EXPOSE 8484
 
 # Healthcheck to ensure the application is running
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
