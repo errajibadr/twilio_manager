@@ -13,11 +13,11 @@ RUN uv pip install --system .
 ENV PYTHONPATH=/app:$PYTHONPATH
 
 # Expose the port Streamlit runs on
-EXPOSE 8484
+# EXPOSE 8484
 
 # Healthcheck to ensure the application is running
 HEALTHCHECK --interval=30s --timeout=30s --start-period=5s --retries=3 \
     CMD curl --fail http://localhost:8501/_stcore/health || exit 1
 
 # Command to run the Streamlit app
-CMD ["streamlit", "run", "src/ui/streamlit_app.py", "--server.address", "0.0.0.0", "--server.port", "8484", "--server.baseUrlPath","/twilio-manager"] 
+CMD ["streamlit", "run", "src/ui/streamlit_app.py", "--server.address", "0.0.0.0",  "--server.baseUrlPath","/twilio-manager"] 

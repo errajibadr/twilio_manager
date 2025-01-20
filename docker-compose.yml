@@ -3,9 +3,11 @@ version: '3.8'
 services:
   streamlit:
     build: .
-    ports:
-      - "8484:8484"
+    # ports:
+    #   - "8484:8484"
     volumes:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1 
+      - STREAMLIT_BASE_URL='/twilio-manager'
+      - STREAMLIT_SERVER_BASE_URL_PATH='/twilio-manager'
