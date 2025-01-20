@@ -9,24 +9,5 @@ services:
       - .:/app
     environment:
       - PYTHONUNBUFFERED=1 
-      - STREAMLIT_BASE_URL='/twilio-manager'
-      - STREAMLIT_SERVER_BASE_URL_PATH='/twilio-manager'
-    labels:
-      - coolify.managed=true
-      - coolify.version=4.0.0-beta.360
-      - coolify.applicationId=2
-      - coolify.type=application
-      - coolify.name=streamlit-i80g4scsocss04w8ss84cc84-143100637478
-      - coolify.pullRequestId=0
-      - traefik.enable=true
-      - traefik.http.middlewares.gzip.compress=true
-      - traefik.http.middlewares.https-0-i80g4scsocss04w8ss84cc84-streamlit-stripprefix.stripprefix.prefixes=/twilio-manager/
-      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-      - traefik.http.routers.http-0-i80g4scsocss04w8ss84cc84-streamlit.entryPoints=http
-      - traefik.http.routers.http-0-i80g4scsocss04w8ss84cc84-streamlit.middlewares=redirect-to-https
-      - 'traefik.http.routers.http-0-i80g4scsocss04w8ss84cc84-streamlit.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio-manager/`)'
-      - traefik.http.routers.https-0-i80g4scsocss04w8ss84cc84-streamlit.entryPoints=https
-      - 'traefik.http.routers.https-0-i80g4scsocss04w8ss84cc84-streamlit.middlewares=https-0-i80g4scsocss04w8ss84cc84-streamlit-stripprefix,gzip'
-      - 'traefik.http.routers.https-0-i80g4scsocss04w8ss84cc84-streamlit.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio-manager/`)'
-      - traefik.http.routers.https-0-i80g4scsocss04w8ss84cc84-streamlit.tls.certresolver=letsencrypt
-      - traefik.http.routers.https-0-i80g4scsocss04w8ss84cc84-streamlit.tls=true
+      - STREAMLIT_BASE_URL=/twilio-manager/
+      - STREAMLIT_SERVER_BASE_URL_PATH=/twilio-manager/
