@@ -3,8 +3,6 @@ services:
     build: .
     ports:
       - '8484:8484'
-    volumes:
-      - 'zkcos4k404ko488g0sk0cokg_:/app'
     container_name: streamlit-zkcos4k404ko488g0sk0cokg-181615426022
     restart: unless-stopped
     labels:
