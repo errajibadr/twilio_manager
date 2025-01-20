@@ -3,8 +3,8 @@ version: '3.8'
 services:
   streamlit:
     build: .
-    # ports:
-    #   - "8484:8484"
+    ports:
+      - "3000"
     volumes:
       - .:/app
     environment:
