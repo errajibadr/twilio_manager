@@ -1,0 +1,16 @@
+cookie:
+  expiry_days: 30
+  key: dev_signature_key # Must be a string
+  name: dev_cookie_name
+credentials:
+  admin:
+    email: info.contact@prestige-webb.fr
+    failed_login_attempts: 0 # Will be managed automatically
+    first_name: Erraji
+    last_name: Ilyass
+    logged_in: False # Will be managed automatically
+    password: $2b$12$TWHnvH93WeZjjgEMT1jHzevTdQTjBTWfeRIsgLJ9yWuV2jkdyvqB.
+    roles: # Optional
+    - admin
+
+

@@ -1,6 +1,4 @@
 import logging
-import urllib.parse
-from contextlib import asynccontextmanager
 from typing import Dict, Optional, Tuple
 
 import aiohttp
@@ -8,6 +6,7 @@ from twilio.http import HttpClient
 from twilio.http.response import Response
 
 _logger = logging.getLogger(__name__)
+
 
 class AsyncTwilioHttpClient(HttpClient):
     """
@@ -100,12 +99,8 @@ class AsyncTwilioHttpClient(HttpClient):
                 content = await response.text()
                 # self.log_response(response.status, response=response) # type: ignore
 
-                twilioResponse = Response(
-                    int(response.status),
-                    content,
-                    dict(response.headers)
-                )
-                
+                twilioResponse = Response(int(response.status), content, dict(response.headers))
+
                 return twilioResponse
         except Exception as e:
             if not self.session.closed:
@@ -162,14 +157,10 @@ class AsyncTwilioHttpClient(HttpClient):
                 content = await response.text()
                 # self.log_response(response.status, response=response) # type: ignore
 
-                twilioResponse = Response(
-                    int(response.status),
-                    content,
-                    dict(response.headers)
-                )
-                
+                twilioResponse = Response(int(response.status), content, dict(response.headers))
+
                 return twilioResponse
         except Exception as e:
             if not self.session.closed:
                 await self.session.close()
-            raise e 
+            raise e

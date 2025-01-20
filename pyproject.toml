@@ -6,8 +6,10 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "python-dotenv>=1.0.1",
+    "streamlit-authenticator>=0.4.1",
     "streamlit>=1.41.1",
     "twilio>=9.4.3",
+    "pyyaml>=6.0.2",
 ]
 
 [dependency-groups]
