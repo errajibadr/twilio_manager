@@ -24,13 +24,6 @@ services:
       - traefik.http.routers.st-twilio-manager-secure.service=streamlit-twilio-manager-svc
       - traefik.http.routers.st-twilio-manager-secure.tls=true
       - traefik.http.routers.st-twilio-manager-secure.tls.certresolver=letsencrypt
-      - traefik.http.middlewares.strip-twilio-prefix.stripprefix.prefixes=/twilio
-      - traefik.http.routers.st-twilio-manager-secure.middlewares=strip-twilio-prefix
+      - traefik.http.routers.st-twilio-manager-secure.middlewares=gzip
       - traefik.http.services.streamlit-twilio-manager-svc.loadbalancer.server.port=8484
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-    networks:
-      - coolify
-
-networks:
-  coolify:
-    external: true
