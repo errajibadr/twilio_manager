@@ -3,55 +3,6 @@ services:
     build: .
     ports:
       - '8484:8484'
-    container_name: streamlit-zkcos4k404ko488g0sk0cokg
+    container_name: streamlit-twilio-manager
     restart: unless-stopped
-    labels:
-      # Coolify Service Identification
-      - coolify.managed=true
-      - coolify.version=4.0.0-beta.360
-      - coolify.name=streamlit-zkcos4k404ko488g0sk0cokg
-      - coolify.pullRequestId=0
-      - coolify.serviceId=3
-      - coolify.type=service
-      - coolify.service.subId=4
-      - coolify.service.subType=application
-
-      # Traefik Basic Setup
-      - traefik.enable=true
-      - traefik.http.middlewares.gzip.compress=true
-
-      # HTTP Routing Configuration
-      - traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.entryPoints=http
-      - 'traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio/`)'
-      - traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.middlewares=redirect-to-https
-      - traefik.http.routers.http-0-zkcos4k404ko488g0sk0cokg-streamlit.service=http-0-zkcos4k404ko488g0sk0cokg-streamlit
-
-      # HTTPS Routing Configuration
-      - traefik.http.routers.https-0-zkcos4k404ko488g0sk0cokg-streamlit.entryPoints=https
-      - 'traefik.http.routers.https-0-zkcos4k404ko488g0sk0cokg-streamlit.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio/`)'
-      - traefik.http.routers.https-0-zkcos4k404ko488g0sk0cokg-streamlit.tls=true
-      - traefik.http.routers.https-0-zkcos4k404ko488g0sk0cokg-streamlit.tls.certresolver=letsencrypt
-
-      # Middleware Configuration
-      - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-      - traefik.http.middlewares.https-0-zkcos4k404ko488g0sk0cokg-streamlit-stripprefix.stripprefix.prefixes=/twilio/
-      - 'traefik.http.routers.https-0-zkcos4k404ko488g0sk0cokg-streamlit.middlewares=https-0-zkcos4k404ko488g0sk0cokg-streamlit-stripprefix,gzip'
-
-      # Service Port Configuration
-      - traefik.http.services.http-0-zkcos4k404ko488g0sk0cokg-streamlit.loadbalancer.server.port=8484
-      - traefik.http.services.https-0-zkcos4k404ko488g0sk0cokg-streamlit.loadbalancer.server.port=8484
-
-      # Caddy Configuration
-      - 'caddy_0.encode=zstd gzip'
-      - 'caddy_0.handle_path.0_reverse_proxy={{upstreams 8484}}'
-      - 'caddy_0.handle_path=/twilio/*'
-      - caddy_0.header=-Server
-      - 'caddy_0.try_files={path} /index.html /index.php'
-      - 'caddy_0=https://solutions.dataunboxed.io'
-      - caddy_ingress_network=zkcos4k404ko488g0sk0cokg
-    networks:
-      zkcos4k404ko488g0sk0cokg: null
-
-networks:
-  zkcos4k404ko488g0sk0cokg:
-    external: true
+    
