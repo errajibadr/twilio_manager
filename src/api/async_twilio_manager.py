@@ -92,7 +92,7 @@ class AsyncTwilioManager:
                 mobile_numbers = await self.client.incoming_phone_numbers.mobile.list_async()
 
             numbers.extend(
-                [{**number.__dict__, "number_type": "local"} for number in local_numbers]
+                [{**number.__dict__, "number_type": "national"} for number in local_numbers]
             )
             numbers.extend(
                 [{**number.__dict__, "number_type": "mobile"} for number in mobile_numbers]

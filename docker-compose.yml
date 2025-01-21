@@ -1,27 +1,32 @@
-version: '3'
-
 services:
-  streamlit:
+  streamlit-twilio-manager-svc:
     build: .
     ports:
       - '8484:8484'
     container_name: streamlit-twilio-manager
     restart: unless-stopped
+    environment:
+      - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
+      - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8484/twilio-manager/_stcore/health"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+      start_period: 5s
     labels:
       - traefik.enable=true
       - traefik.http.routers.st-twilio-manager.entrypoints=http
-      - 'traefik.http.routers.st-twilio-manager.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio`)'
+      - 'traefik.http.routers.st-twilio-manager.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio-manager`)'
       - traefik.http.routers.st-twilio-manager.middlewares=redirect-to-https
       - traefik.http.routers.st-twilio-manager-secure.entrypoints=https
-      - 'traefik.http.routers.st-twilio-manager-secure.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio`)'
+      - 'traefik.http.routers.st-twilio-manager-secure.rule=Host(`solutions.dataunboxed.io`) && PathPrefix(`/twilio-manager`)'
+      - traefik.http.routers.st-twilio-manager-secure.service=streamlit-twilio-manager-svc
       - traefik.http.routers.st-twilio-manager-secure.tls=true
       - traefik.http.routers.st-twilio-manager-secure.tls.certresolver=letsencrypt
       - traefik.http.middlewares.strip-twilio-prefix.stripprefix.prefixes=/twilio
       - traefik.http.routers.st-twilio-manager-secure.middlewares=strip-twilio-prefix
-      - traefik.http.services.st-twilio-manager.loadbalancer.server.port=8484
+      - traefik.http.services.streamlit-twilio-manager-svc.loadbalancer.server.port=8484
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
-    networks:
-      - coolify
-networks:
-  coolify:
-    external: true
+
+

@@ -3,7 +3,7 @@ from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv(".env.dev")
 
 # Twilio credentials
 MAIN_ACCOUNT_SID = os.environ["TWILIO_ACCOUNT_SID"]
