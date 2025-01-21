@@ -5,4 +5,8 @@ services:
       - '8484:8484'
     container_name: streamlit-twilio-manager
     restart: unless-stopped
-    
+    networks:
+      - coolify
+networks:
+  coolify:
+    external: true
