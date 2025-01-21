@@ -17,4 +17,4 @@ ENV PYTHONPATH=/app:$PYTHONPATH
 EXPOSE 8484
 
 # Command to run the Streamlit app
-CMD ["streamlit", "run", "src/ui/streamlit_app.py", "--server.address", "0.0.0.0", "--server.baseUrlPath", "/twilio-manager", "--server.port", "8484"] 
+CMD ["streamlit", "run", "src/ui/streamlit_app.py", "--server.address", "0.0.0.0", "--server.baseUrlPath", "/twilio-manager", "--server.port", "8484"]

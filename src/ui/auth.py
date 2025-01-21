@@ -5,10 +5,10 @@ import streamlit as st
 import streamlit_authenticator as stauth
 import yaml
 
-from src.utils.logger import setup_logger
+from src.utils.logger import get_log_path, setup_logger
 
 # Set up logger
-logger = setup_logger("auth", Path(__file__).parent.parent.parent / "logs" / "auth.log")
+logger = setup_logger("auth", get_log_path() / "auth.log")
 
 
 class StreamlitAuth:

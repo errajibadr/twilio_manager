@@ -22,3 +22,8 @@ logs/*
 # Coolify specific
 coolify/
 .coolify/
+
+# Logs
+logs/app/twilio-manager/**/*.log
+logs/app/twilio-manager/**/*.log.*
+!logs/app/twilio-manager/**/.gitkeep

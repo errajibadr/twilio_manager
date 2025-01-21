@@ -8,6 +8,9 @@ services:
     environment:
       - TWILIO_ACCOUNT_SID=${TWILIO_ACCOUNT_SID}
       - TWILIO_AUTH_TOKEN=${TWILIO_AUTH_TOKEN}
+      - LOG_PATH=/logs
+    volumes:
+      - twilio_manager_logs:/logs
     healthcheck:
       test: ["CMD", "curl", "--fail", "http://localhost:8484/twilio-manager/_stcore/health"]
       interval: 30s
@@ -27,3 +30,11 @@ services:
       - traefik.http.routers.st-twilio-manager-secure.middlewares=gzip
       - traefik.http.services.streamlit-twilio-manager-svc.loadbalancer.server.port=8484
       - traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https
+
+volumes:
+  twilio_manager_logs:
+    driver: local
+    driver_opts:
+      type: none
+      device: /logs/app/twilio-manager
+      o: bind

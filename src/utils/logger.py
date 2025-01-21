@@ -1,7 +1,21 @@
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import Optional
+
+
+def get_log_path():
+    # If LOG_PATH environment variable is set (in Docker), use it
+    if os.getenv("LOG_PATH"):
+        base_path = Path(os.environ["LOG_PATH"])
+    else:
+        # For local development, use the project root/logs directory
+        base_path = Path(__file__).parent.parent.parent / "logs"
+
+    # Create the directory if it doesn't exist
+    base_path.mkdir(parents=True, exist_ok=True)
+    return base_path
 
 
 def setup_logger(name: str, log_file: Optional[Path] = None, level=logging.INFO) -> logging.Logger:
